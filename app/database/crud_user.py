@@ -1,17 +1,14 @@
 from fastapi import HTTPException, status
-from sqlmodel import Session
+from sqlmodel import Session, select
 from sqlalchemy.exc import IntegrityError
-from argon2 import PasswordHasher
 
 from ..models.user import UserDB, UserCreate
-
-
-pwd_hasher = PasswordHasher()
+from ..utils.hasher import password_hasher
 
 
 def create(session: Session, user: UserCreate) -> UserDB:
     new_user = UserDB.model_validate(user)
-    new_user.password = pwd_hasher.hash(new_user.password)
+    new_user.password = password_hasher.hash(new_user.password)
     try:
         session.add(new_user)
         session.commit()
@@ -23,3 +20,16 @@ def create(session: Session, user: UserCreate) -> UserDB:
         )
     session.refresh(new_user)
     return new_user
+
+
+def get_by_username(session: Session, username: str) -> UserDB | None:
+    user = session.exec(
+        select(UserDB).where(UserDB.username == username)
+    ).first()
+
+    return user
+
+
+def get_by_id(session: Session, id: str) -> UserDB | None:
+    user = session.exec(select(UserDB).where(UserDB.id == id)).first()
+    return user
