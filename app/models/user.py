@@ -35,4 +35,8 @@ class UserGet(SQLModel):
 
 
 class UserUpdate(SQLModel):
-    pass
+    username: str | None = None
+
+
+class UserDelete(SQLModel):
+    confirm_text: str = Field(max_length=80)
