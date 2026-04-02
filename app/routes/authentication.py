@@ -16,7 +16,7 @@ router = APIRouter(prefix='/auth', tags=['Authentication'])
 )
 async def register_user(
     user: UserCreate, session: Session = Depends(get_session),
-) -> UserRead:
+):
     """
     Register new user.
 
@@ -31,7 +31,7 @@ async def register_user(
             detail='Password confirmation does not match'
         )
     new_user = crud_user.create(session, user)
-    return UserRead(**new_user.model_dump())
+    return new_user
 
 
 @router.post('/signin')
