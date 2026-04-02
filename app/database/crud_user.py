@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlmodel import Session, select
 from sqlalchemy.exc import IntegrityError
+from uuid import UUID
 
 from ..models.user import UserDB, UserCreate
 from ..utils.hasher import password_hasher
@@ -30,6 +31,6 @@ def get_by_username(session: Session, username: str) -> UserDB | None:
     return user
 
 
-def get_by_id(session: Session, id: str) -> UserDB | None:
+def get_by_id(session: Session, id: UUID) -> UserDB | None:
     user = session.exec(select(UserDB).where(UserDB.id == id)).first()
     return user

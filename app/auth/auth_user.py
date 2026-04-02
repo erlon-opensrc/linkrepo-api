@@ -1,5 +1,6 @@
 import os
 import jwt
+import uuid
 from dotenv import load_dotenv
 from datetime import timedelta
 from fastapi import Depends, HTTPException, status
@@ -9,6 +10,7 @@ from typing import Literal, Any
 from argon2.exceptions import VerifyMismatchError
 
 from ..database import crud_user
+from ..database.config import get_session
 from ..models.user import UserRead
 from ..utils.hasher import password_hasher
 from ..utils.timestamps import utcnow
@@ -26,7 +28,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', 30)
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/signin')
 
 user_credentials_exception = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -60,7 +62,8 @@ def create_access_token(payload: dict[str, Any]) -> str:
 
 
 def get_current_user(
-    *, session: Session, token: str = Depends(oauth2_scheme)
+    session: Session = Depends(get_session),
+    token: str = Depends(oauth2_scheme)
 ) -> UserRead:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]) # type: ignore
@@ -70,7 +73,7 @@ def get_current_user(
     except jwt.DecodeError:
         raise user_credentials_exception
 
-    current_user = crud_user.get_by_id(session, user_id)
+    current_user = crud_user.get_by_id(session, uuid.UUID(user_id))
     if current_user is None:
         raise user_credentials_exception
 
